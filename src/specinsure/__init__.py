@@ -1,16 +1,58 @@
-"""specinsure: simulate specialty insurance losses and reinsurance structures."""
+"""specinsure: Monte Carlo pricing, capital and portfolio analysis for specialty (re)insurance.
 
-from . import metrics
-from .simulation import YearLossTable, simulate
-from .treaties import ExcessOfLossTreaty, QuotaShareTreaty, ReinsuranceTreaty
+Subpackages
+-----------
+core           exceptions, types, validation, random streams
+distributions  frequency/severity distributions, fitting
+simulation     year loss tables, multi-line simulation with copulas
+risk           VaR, TVaR, return periods, AEP/OEP, capital allocation
+reinsurance    quota share, XoL (AAD, reinstatements), aggregate XoL, programmes
+pricing        burning cost, exposure rating, credibility, technical premium
+reserving      triangles, chain ladder, BF, Cape Cod, Mack, Merz-Wüthrich, ODP bootstrap
+portfolio      lines of business, risk profiles, portfolio results
+optimisation   mean-TVaR line mix, reinsurance structure evaluation
+reporting      summary tables and plots
+
+The most common entry points are re-exported here.
+"""
+
+from . import (
+    core,
+    distributions,
+    optimisation,
+    portfolio,
+    pricing,
+    reinsurance,
+    reporting,
+    reserving,
+    risk,
+    simulation,
+)
+from .portfolio import LineOfBusiness, Portfolio
+from .reinsurance import AggregateExcessOfLoss, ExcessOfLoss, Programme, QuotaShare
+from .simulation import FrequencySeverityModel, YearLossTable, simulate, simulate_portfolio
 
 __all__ = [
-    "ExcessOfLossTreaty",
-    "QuotaShareTreaty",
-    "ReinsuranceTreaty",
+    "AggregateExcessOfLoss",
+    "ExcessOfLoss",
+    "FrequencySeverityModel",
+    "LineOfBusiness",
+    "Portfolio",
+    "Programme",
+    "QuotaShare",
     "YearLossTable",
-    "metrics",
+    "core",
+    "distributions",
+    "optimisation",
+    "portfolio",
+    "pricing",
+    "reinsurance",
+    "reporting",
+    "reserving",
+    "risk",
     "simulate",
+    "simulate_portfolio",
+    "simulation",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
