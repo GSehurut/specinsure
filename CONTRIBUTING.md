@@ -23,7 +23,7 @@ pytest
 
 ## Making a change
 
-1. Fork the repository and create a branch from `main` (`git checkout -b fix-aggregate-limit`).
+1. Fork the repository and create a branch from `main` (`git checkout -b add-reinstatements`).
 2. Make your change with tests. Bug fixes should include a test that fails without the fix.
 3. Run the checks locally:
    ```sh
