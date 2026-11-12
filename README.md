@@ -3,16 +3,21 @@
 [![CI](https://github.com/GSehurut/specinsure/actions/workflows/ci.yml/badge.svg)](https://github.com/GSehurut/specinsure/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A small, well tested Python toolkit for simulating specialty insurance losses and the reinsurance structures that protect them.
+A transparent, well tested Python toolkit for specialty insurance and reinsurance analytics in the London Market style: simulate losses, structure and price reinsurance, measure capital, and optimise the portfolio.
 
-It is aimed at actuaries, analysts and students who want to explore how excess of loss and quota share programmes change a loss portfolio, using transparent Monte Carlo methods rather than a black box.
+It is aimed at actuaries, analysts and students who want Monte Carlo methods they can read, check against textbook formulas, and extend.
 
-## Features
+## What it does
 
-- **Frequency and severity simulation** into a year loss table, using any `scipy.stats` distribution
-- **Treaties:** per-occurrence and annual aggregate excess of loss (with optional aggregate limit), and quota share
-- **Annual terms applied correctly,** year by year across a simulation
-- **Risk metrics:** average annual loss, VaR, TVaR, return period losses, AEP and OEP curves
+| Area | Highlights |
+| --- | --- |
+| **Distributions** | Any `scipy.stats` distribution, actuarial parametrisations (lognormal from mean/CV, negative binomial from mean/variance, Pareto above a threshold), empirical and mixture distributions, MLE fitting with AIC/BIC comparison, closed-form layer expected values |
+| **Simulation** | Frequency-severity year loss tables; multi-line portfolios with Gaussian or Student t copula dependency (Iman-Conover), independent random streams per line |
+| **Reinsurance** | Quota share (with event limit), per-occurrence XoL with AAD, reinstatements and aggregate limits, aggregate XoL / stop loss, inuring programmes, ROL / LOL, reinstatement premiums |
+| **Risk & capital** | AAL with Monte Carlo standard error, VaR, TVaR, 1-in-N losses, AEP / OEP curves, SCR-style capital, Euler (co-TVaR) capital allocation, diversification benefit |
+| **Pricing** | Burning cost with trend, on-levelling and development; MBBEFD exposure rating; credibility blending; technical premium with expenses, cost of capital and reinstatement premium offset |
+| **Optimisation** | Mean-TVaR line mix (Rockafellar-Uryasev LP), efficient frontier, reinsurance structure evaluation on cost of capital released |
+| **Reporting** | Risk and layer summary tables, AEP / OEP plots (optional matplotlib) |
 
 ## Quick start
 
@@ -21,40 +26,66 @@ pip install git+https://github.com/GSehurut/specinsure.git
 ```
 
 ```python
-from scipy import stats
-from specinsure import ExcessOfLossTreaty, simulate, metrics
+from specinsure import ExcessOfLoss, FrequencySeverityModel, simulate
+from specinsure.distributions import lognormal, negative_binomial
+from specinsure.pricing import Loadings, technical_price
+from specinsure.risk import aal, return_period_loss
 
-# 50,000 years: negative binomial frequency, lognormal severity
-ylt = simulate(
-    frequency=stats.nbinom(n=12, p=0.5),
-    severity=stats.lognorm(s=1.2, scale=1_000_000),
-    n_years=50_000,
-    seed=42,
-)
+# 50,000 years of an over-dispersed property book
+model = FrequencySeverityModel(negative_binomial(mean=6, variance=12), lognormal(mean=1.5e6, cv=2.5))
+ylt = simulate(model, n_years=50_000, seed=42)
 
-layer = ExcessOfLossTreaty(attachment=2_000_000, limit=5_000_000)
-ceded = ylt.ceded(layer)
+# 10m xs 5m per risk, one reinstatement at 100%
+layer = ExcessOfLoss(limit=10e6, attachment=5e6, reinstatements=1)
+net_annual = ylt.annual_totals(ylt.losses - ylt.ceded(layer))
 
-gross_annual = ylt.annual_totals()
-net_annual = ylt.annual_totals(ylt.losses - ceded)
+print(f"Gross AAL:       {aal(ylt.annual_totals()):,.0f}")
+print(f"Net 1-in-200:    {return_period_loss(net_annual, 200):,.0f}")
+print(f"Gross OEP 1-in-100: {return_period_loss(ylt.annual_max(), 100):,.0f}")
 
-print(f"AAL gross: {metrics.aal(gross_annual):,.0f}")
-print(f"1-in-200 net: {metrics.return_period_loss(net_annual, 200):,.0f}")
-print(f"OEP 1-in-100 gross: {metrics.return_period_loss(ylt.annual_max(), 100):,.0f}")
+price = technical_price(ylt, layer, Loadings(brokerage=0.10, cost_of_capital=0.10))
+print(f"Technical ROL:   {price.rate_on_line:.1%}  (LOL {price.loss_on_line:.1%})")
 ```
 
-The [examples](examples/) folder has a notebook comparing severity distributions and the effect of an XoL layer.
+[`examples/portfolio_walkthrough.py`](examples/portfolio_walkthrough.py) goes end to end: a three-class portfolio with a t copula, layer pricing, ranking reinsurance structures by value, and optimising the line mix. The notebook in [`examples/`](examples/) compares severity distributions.
+
+## Conventions
+
+- **Losses are positive** in risk measures (`var`, `tvar`, ...). Underwriting results are positive for profit; pass `-result` to a risk measure.
+- **Annual terms are applied per simulated year**, in occurrence order within the year.
+- **1-in-N = VaR at 1 - 1/N**: the 1-in-200 loss is VaR 99.5%.
+- **TVaR** is the mean of the worst `ceil(n (1 - level))` simulations.
+- **Every stochastic function takes a seed**; nothing uses global `np.random` state.
+
+## Package layout
+
+```
+specinsure/
+├── core/           exceptions, types, validation, random streams
+├── distributions/  base, scipy adapters, empirical, mixture, fitting
+├── simulation/     models, sampling (copulas), engine, results (YearLossTable)
+├── risk/           measures, return periods, exceedance curves, aggregation / allocation
+├── reinsurance/    treaties, programmes, layer calculations
+├── pricing/        inputs, adjustments, rating methods, results
+├── portfolio/      lines of business, exposure profiles, portfolio results
+├── optimisation/   line mix LP, efficient frontier, reinsurance evaluation
+└── reporting/      summary tables, plots
+```
+
+Dependencies point down the list: `core` depends on nothing, and `optimisation` and `reporting` sit on top. See [CONTRIBUTING.md](CONTRIBUTING.md#architecture) for where new code belongs.
 
 ## Contributing
 
-Contributions are very welcome, from fixing a typo to adding a new treaty type. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [roadmap](ROADMAP.md), or pick an issue labelled [`good first issue`](https://github.com/GSehurut/specinsure/labels/good%20first%20issue).
+Contributions are very welcome, from fixing a typo to adding a reserving module. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [roadmap](ROADMAP.md), or pick an issue labelled [`good first issue`](https://github.com/GSehurut/specinsure/labels/good%20first%20issue).
 
-## Background reading
-
-The methods follow standard actuarial references:
+## References
 
 - Klugman, Panjer and Willmot, *Loss Models: From Data to Decisions*, Wiley.
 - Kaas, Goovaerts, Dhaene and Denuit, *Modern Actuarial Risk Theory*, Springer.
+- Bernegger (1997), "The Swiss Re exposure curves and the MBBEFD distribution class", *ASTIN Bulletin* 27(1).
+- Rockafellar and Uryasev (2000), "Optimization of conditional value-at-risk", *Journal of Risk* 2(3).
+- Iman and Conover (1982), "A distribution-free approach to inducing rank correlation among input variables".
+- Tasche (1999), "Risk contributions and performance measurement".
 - [Monte Carlo loss simulation for specialty insurance](https://gsehurut.github.io/blog/2024/03/20/loss-simulation-monte-carlo/), the blog post this project grew from.
 
 ## Licence
