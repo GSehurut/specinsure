@@ -8,7 +8,7 @@ simulation     year loss tables, multi-line simulation with copulas
 risk           VaR, TVaR, return periods, AEP/OEP, capital allocation
 reinsurance    quota share, XoL (AAD, reinstatements), aggregate XoL, programmes
 pricing        burning cost, exposure rating, credibility, technical premium
-reserving      triangles, chain ladder, BF, Cape Cod, Mack, ODP bootstrap
+reserving      triangles, chain ladder, BF, Cape Cod, Mack, Merz-Wüthrich, ODP bootstrap
 portfolio      lines of business, risk profiles, portfolio results
 optimisation   mean-TVaR line mix, reinsurance structure evaluation
 reporting      summary tables and plots

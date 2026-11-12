@@ -16,7 +16,7 @@ It is aimed at actuaries, analysts and students who want Monte Carlo methods the
 | **Reinsurance** | Quota share (with event limit), per-occurrence XoL with AAD, reinstatements and aggregate limits, aggregate XoL / stop loss, inuring programmes, ROL / LOL, reinstatement premiums |
 | **Risk & capital** | AAL with Monte Carlo standard error, VaR, TVaR, 1-in-N losses, AEP / OEP curves, SCR-style capital, Euler (co-TVaR) capital allocation, diversification benefit |
 | **Pricing** | Burning cost with trend, on-levelling and development; MBBEFD exposure rating; credibility blending; technical premium with expenses, cost of capital and reinstatement premium offset |
-| **Reserving** | Triangles from arrays or transaction data, volume / simple / recent-period factors, exponential tail, chain ladder, Bornhuetter-Ferguson, Cape Cod, Mack standard errors, ODP bootstrap reserve distribution |
+| **Reserving** | Triangles from arrays or transaction data, volume / simple / recent-period factors, exponential tail, chain ladder, Bornhuetter-Ferguson, Cape Cod, Mack standard errors, Merz-Wüthrich one-year reserve risk, ODP bootstrap reserve distribution |
 | **Optimisation** | Mean-TVaR line mix (Rockafellar-Uryasev LP), efficient frontier, reinsurance structure evaluation on cost of capital released |
 | **Reporting** | Risk and layer summary tables, AEP / OEP plots (optional matplotlib) |
 
@@ -52,11 +52,16 @@ Reserving works on claims triangles:
 
 ```python
 import numpy as np
-from specinsure.reserving import Triangle, bornhuetter_ferguson, mack_chain_ladder, odp_bootstrap
+from specinsure.reserving import (
+    Triangle, bornhuetter_ferguson, mack_chain_ladder, merz_wuthrich, odp_bootstrap,
+)
 
 triangle = Triangle.from_claims(origin=uw_year, age=dev_year, amount=incremental_paid)
 mack = mack_chain_ladder(triangle)
 print(f"Reserve {mack.total_reserve:,.0f}, Mack s.e. {mack.total_standard_error:,.0f}")
+
+one_year = merz_wuthrich(triangle)  # Solvency II view: next calendar year only
+print(f"One-year CDR s.e. {one_year.total_standard_error:,.0f}")
 
 bf = bornhuetter_ferguson(triangle, premium=premium_by_year, loss_ratio=0.65)
 boot = odp_bootstrap(triangle, n_sims=10_000, seed=1)
@@ -83,7 +88,7 @@ specinsure/
 ├── risk/           measures, return periods, exceedance curves, aggregation / allocation
 ├── reinsurance/    treaties, programmes, layer calculations
 ├── pricing/        inputs, adjustments, rating methods, results
-├── reserving/      triangles, development, CL / BF / Cape Cod, Mack, ODP bootstrap
+├── reserving/      triangles, development, CL / BF / Cape Cod, Mack, Merz-Wüthrich, ODP bootstrap
 ├── portfolio/      lines of business, exposure profiles, portfolio results
 ├── optimisation/   line mix LP, efficient frontier, reinsurance evaluation
 └── reporting/      summary tables, plots
@@ -103,6 +108,7 @@ Contributions are very welcome, from fixing a typo to adding a reserving module.
 - Rockafellar and Uryasev (2000), "Optimization of conditional value-at-risk", *Journal of Risk* 2(3).
 - Iman and Conover (1982), "A distribution-free approach to inducing rank correlation among input variables".
 - Mack (1993), "Distribution-free calculation of the standard error of chain ladder reserve estimates", *ASTIN Bulletin* 23(2).
+- Merz and Wüthrich (2008), "Modelling the claims development result for solvency purposes", *CAS E-Forum*, Fall 2008.
 - England and Verrall (2002), "Stochastic claims reserving in general insurance", *British Actuarial Journal* 8(3).
 - Tasche (1999), "Risk contributions and performance measurement".
 - [Monte Carlo loss simulation for specialty insurance](https://gsehurut.github.io/blog/2024/03/20/loss-simulation-monte-carlo/), the blog post this project grew from.

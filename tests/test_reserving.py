@@ -16,6 +16,7 @@ from specinsure.reserving import (
     expected_loss_ratio,
     exponential_tail,
     mack_chain_ladder,
+    merz_wuthrich,
     odp_bootstrap,
 )
 
@@ -209,6 +210,88 @@ def test_mack_loglinear_extrapolation(ta):
 def test_mack_needs_enough_data():
     with pytest.raises(ValidationError):
         mack_chain_ladder(Triangle.from_cumulative(np.array([[1.0, 2.0], [1.0, np.nan]])))
+
+
+# --- Merz-Wüthrich one-year view ----------------------------------------------------
+
+
+def _simulate_next_year_cdr(triangle, result, n_sims, seed):
+    """Simulate next year's diagonal from the fitted chain ladder (factors taken as true),
+    re-estimate the factors and return the CDR per origin. Its spread is the CDR
+    process error, which the Merz-Wüthrich multiplicative form gives exactly."""
+    c = triangle.values
+    n_ages = c.shape[1]
+    f, sigma2, age = result.pattern.factors, result.mack.sigma2, triangle.latest_index
+    rng = np.random.default_rng(seed)
+    open_rows = np.flatnonzero(age < n_ages - 1)
+    next_value = {
+        i: c[i, age[i]]
+        * (f[age[i]] + np.sqrt(sigma2[age[i]] / c[i, age[i]]) * rng.standard_normal(n_sims))
+        for i in open_rows
+    }
+    new_f = np.empty((n_sims, n_ages - 1))
+    for j in range(n_ages - 1):
+        known = ~np.isnan(c[:, j + 1])
+        num = np.full(n_sims, c[known, j + 1].sum())
+        den = c[known, j].sum()
+        for i in open_rows[age[open_rows] == j]:
+            num = num + next_value[i]
+            den += c[i, j]
+        new_f[:, j] = num / den
+    new_ultimate = np.tile(result.ultimate, (n_sims, 1))
+    for i in open_rows:
+        new_ultimate[:, i] = next_value[i] * np.prod(new_f[:, age[i] + 1 :], axis=1)
+    return result.ultimate - new_ultimate
+
+
+def test_merz_wuthrich_taylor_ashe(ta):
+    r = merz_wuthrich(ta)
+    m = mack_chain_ladder(ta)
+    # Same chain ladder best estimate as Mack
+    assert r.total_reserve == pytest.approx(18_680_856, abs=1)
+    # Only one period remains for the oldest open origin, so one-year = ultimate
+    assert r.standard_error[1] == pytest.approx(m.standard_error[1], rel=1e-12)
+    # The first year's risk is part of the run-off risk
+    assert np.all(r.standard_error[2:] < m.standard_error[2:])
+    assert r.total_standard_error == pytest.approx(1_779_242, abs=1)
+    assert r.one_year_ratio == pytest.approx(0.727, abs=1e-3)
+    np.testing.assert_allclose(
+        r.standard_error**2, r.process_error**2 + r.parameter_error**2, rtol=1e-12
+    )
+    assert r.total_standard_error**2 == pytest.approx(
+        r.total_process_error**2 + r.total_parameter_error**2
+    )
+    rows = r.summary()
+    assert rows[-1]["cdr_standard_error"] == pytest.approx(r.total_standard_error)
+    assert rows[-1]["mack_standard_error"] == pytest.approx(m.total_standard_error)
+
+
+def test_merz_wuthrich_process_error_matches_simulation(ta):
+    r = merz_wuthrich(ta)
+    cdr = _simulate_next_year_cdr(ta, r, n_sims=100_000, seed=11)
+    np.testing.assert_allclose(cdr.std(axis=0)[1:], r.process_error[1:], rtol=0.01)
+    assert cdr.sum(axis=1).std() == pytest.approx(r.total_process_error, rel=0.01)
+    # The CDR is centred on zero
+    assert abs(cdr.sum(axis=1).mean()) < 4 * r.total_process_error / np.sqrt(100_000)
+
+
+def test_merz_wuthrich_rows_sharing_a_latest_age():
+    # Two origins at each of the last two ages: diagonal volumes are pooled
+    rows = [TAYLOR_ASHE[0][:8], *[r[:8] for r in TAYLOR_ASHE[1:8]]]
+    rows += [TAYLOR_ASHE[8][:2], [376_000, 1_350_000], TAYLOR_ASHE[9][:1], [350_000]]
+    tri = Triangle.from_cumulative(to_array(rows))
+    r = merz_wuthrich(tri)
+    assert np.all(r.standard_error <= r.mack.standard_error + 1e-6)
+    cdr = _simulate_next_year_cdr(tri, r, n_sims=100_000, seed=5)
+    open_rows = r.process_error > 0
+    np.testing.assert_allclose(cdr.std(axis=0)[open_rows], r.process_error[open_rows], rtol=0.01)
+    assert cdr.sum(axis=1).std() == pytest.approx(r.total_process_error, rel=0.01)
+
+
+def test_merz_wuthrich_loglinear(ta):
+    r = merz_wuthrich(ta, sigma_extrapolation="loglinear")
+    assert r.total_standard_error < r.mack.total_standard_error
+    assert r.total_standard_error == pytest.approx(1_779_242, rel=0.01)
 
 
 # --- ODP bootstrap ------------------------------------------------------------------

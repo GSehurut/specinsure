@@ -5,6 +5,7 @@
 ### Added
 
 - `reserving`: `Triangle` (from cumulative, incremental or long-format claims), development factor selection and exponential tail, chain ladder, expected loss ratio, Bornhuetter-Ferguson, Cape Cod, Mack standard errors (validated against Mack 1993 on the Taylor-Ashe triangle) and the ODP bootstrap (England and Verrall 2002).
+- `reserving.merz_wuthrich`: one-year claims development result standard errors (Merz and Wüthrich 2008), with the Mack ultimate view for comparison.
 
 ## 0.2.0 (unreleased)
 

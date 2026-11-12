@@ -94,6 +94,46 @@ class MackResult(ReserveResult):
 
 
 @dataclass(frozen=True)
+class MerzWuthrichResult(ReserveResult):
+    """One-year claims development result (CDR) standard errors, Merz & Wüthrich (2008).
+
+    ``standard_error`` is the root mean squared error of prediction of the
+    next calendar year's CDR by origin; ``total_standard_error`` is for the
+    whole portfolio. ``mack`` holds the ultimate (run-off) view on the same
+    factors, so ``one_year_ratio`` shows how much of the ultimate reserve
+    risk emerges in the first year.
+    """
+
+    standard_error: FloatArray = field(default_factory=lambda: np.empty(0))
+    process_error: FloatArray = field(default_factory=lambda: np.empty(0))
+    parameter_error: FloatArray = field(default_factory=lambda: np.empty(0))
+    total_standard_error: float = 0.0
+    total_process_error: float = 0.0
+    total_parameter_error: float = 0.0
+    mack: MackResult | None = None
+
+    @property
+    def one_year_ratio(self) -> float:
+        """Total one-year standard error divided by Mack's ultimate standard error."""
+        if self.mack is None:
+            return float("nan")
+        return self.total_standard_error / self.mack.total_standard_error
+
+    def summary(self) -> list[dict[str, float]]:
+        rows = super().summary()
+        one_year = [*self.standard_error, self.total_standard_error]
+        ultimate = (
+            [*self.mack.standard_error, self.mack.total_standard_error]
+            if self.mack is not None
+            else [float("nan")] * len(rows)
+        )
+        for row, cdr, mack in zip(rows, one_year, ultimate, strict=False):
+            row["cdr_standard_error"] = float(cdr)
+            row["mack_standard_error"] = float(mack)
+        return rows
+
+
+@dataclass(frozen=True)
 class BootstrapResult:
     """Simulated reserves by origin from the ODP bootstrap, shape ``(n_sims, n_origins)``.
 

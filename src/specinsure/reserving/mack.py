@@ -52,6 +52,11 @@ def _sigma2(
     return sigma2
 
 
+def _factor_volumes(c: FloatArray) -> FloatArray:
+    """S_k: the sum of C[., k] over the origins used to estimate factor k."""
+    return np.array([c[~np.isnan(c[:, k + 1]), k].sum() for k in range(c.shape[1] - 1)])
+
+
 def mack_chain_ladder(
     triangle: Triangle, *, sigma_extrapolation: Literal["mack", "loglinear"] = "mack"
 ) -> MackResult:
@@ -71,8 +76,7 @@ def mack_chain_ladder(
     n_origins, n_ages = triangle.shape
     latest_idx = triangle.latest_index
 
-    # S_k: the sum of C[., k] over origins used to estimate f_k
-    s = np.array([c[~np.isnan(c[:, k + 1]), k].sum() for k in range(n_ages - 1)])
+    s = _factor_volumes(c)
 
     # Complete the square with chain ladder projections
     full = c.copy()
