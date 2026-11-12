@@ -22,7 +22,7 @@ classifiers = [
 
 [project.optional-dependencies]
 plot = ["matplotlib>=3.7"]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "matplotlib>=3.7"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff==0.17.5", "matplotlib>=3.7"]
 examples = ["jupyter", "matplotlib", "pandas", "seaborn"]
 
 [project.urls]

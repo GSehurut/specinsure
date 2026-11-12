@@ -33,7 +33,9 @@ from specinsure.pricing import Loadings, technical_price
 from specinsure.risk import aal, return_period_loss
 
 # 50,000 years of an over-dispersed property book
-model = FrequencySeverityModel(negative_binomial(mean=6, variance=12), lognormal(mean=1.5e6, cv=2.5))
+model = FrequencySeverityModel(
+    negative_binomial(mean=6, variance=12), lognormal(mean=1.5e6, cv=2.5)
+)
 ylt = simulate(model, n_years=50_000, seed=42)
 
 # 10m xs 5m per risk, one reinstatement at 100%
@@ -53,7 +55,11 @@ Reserving works on claims triangles:
 ```python
 import numpy as np
 from specinsure.reserving import (
-    Triangle, bornhuetter_ferguson, mack_chain_ladder, merz_wuthrich, odp_bootstrap,
+    Triangle,
+    bornhuetter_ferguson,
+    mack_chain_ladder,
+    merz_wuthrich,
+    odp_bootstrap,
 )
 
 triangle = Triangle.from_claims(origin=uw_year, age=dev_year, amount=incremental_paid)
