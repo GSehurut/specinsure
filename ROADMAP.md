@@ -4,8 +4,12 @@ Where specinsure is heading. Items marked **good first issue** are well scoped f
 
 ## 0.3: reserving and capital
 
-- [ ] **`reserving/` package:** triangles (paid / incurred, by underwriting year), chain ladder, Bornhuetter-Ferguson, Cape Cod
-- [ ] **Reserve uncertainty:** Mack standard error and ODP bootstrap (England & Verrall), one-year (Merz-Wüthrich) view for reserve risk
+- [x] **`reserving/` package:** triangles (paid / incurred, by underwriting year), chain ladder, Bornhuetter-Ferguson, Cape Cod
+- [x] **Reserve uncertainty:** Mack standard error and ODP bootstrap (England & Verrall)
+- [ ] **One-year reserve risk:** Merz-Wüthrich and a one-year re-reserving bootstrap
+- [ ] **Tail uncertainty** in Mack and the bootstrap; bootstrap with a tail factor
+- [ ] **Reserving diagnostics:** residual plots by origin, age and calendar period; actual versus expected **(good first issue)**
+- [ ] **Paid / incurred comparison** and Munich chain ladder
 - [ ] **Premium and reserve risk combined** in the capital view, with reinsurer credit risk on recoveries
 - [ ] **Ultimate (uSCR) and one-year capital** helpers, with the Lloyd's 35% economic capital uplift as an option
 - [ ] **Seed stability check** for tail quantiles: rerun with several seeds and report the spread **(good first issue)**

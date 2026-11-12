@@ -44,6 +44,7 @@ The package is layered; a module may import from layers above it in this list, n
 | 3 | `simulation` | turns models into year loss tables (`YearLossTable`, `SimulationResult`) |
 | 3 | `risk` | measures risk on arrays of simulated outcomes (no knowledge of treaties) |
 | 4 | `reinsurance` | transforms per-loss arrays into ceded amounts, or computes layer metrics |
+| 4 | `reserving` | projects claims triangles to ultimate or measures reserve uncertainty |
 | 5 | `pricing` | turns experience, exposure or simulations into a loss cost or premium |
 | 5 | `portfolio` | combines lines of business, their reinsurance and premiums |
 | 6 | `optimisation` | chooses decisions (line weights, structures) using the layers below |

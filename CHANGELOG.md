@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `reserving`: `Triangle` (from cumulative, incremental or long-format claims), development factor selection and exponential tail, chain ladder, expected loss ratio, Bornhuetter-Ferguson, Cape Cod, Mack standard errors (validated against Mack 1993 on the Taylor-Ashe triangle) and the ODP bootstrap (England and Verrall 2002).
+
 ## 0.2.0 (unreleased)
 
 A restructure into layered subpackages and a large expansion of scope: pricing, capital and portfolio optimisation.

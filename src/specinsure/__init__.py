@@ -8,6 +8,7 @@ simulation     year loss tables, multi-line simulation with copulas
 risk           VaR, TVaR, return periods, AEP/OEP, capital allocation
 reinsurance    quota share, XoL (AAD, reinstatements), aggregate XoL, programmes
 pricing        burning cost, exposure rating, credibility, technical premium
+reserving      triangles, chain ladder, BF, Cape Cod, Mack, ODP bootstrap
 portfolio      lines of business, risk profiles, portfolio results
 optimisation   mean-TVaR line mix, reinsurance structure evaluation
 reporting      summary tables and plots
@@ -23,6 +24,7 @@ from . import (
     pricing,
     reinsurance,
     reporting,
+    reserving,
     risk,
     simulation,
 )
@@ -46,6 +48,7 @@ __all__ = [
     "pricing",
     "reinsurance",
     "reporting",
+    "reserving",
     "risk",
     "simulate",
     "simulate_portfolio",
