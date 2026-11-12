@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "specinsure"
+version = "0.1.0"
+description = "Simulate specialty insurance losses and reinsurance structures with Monte Carlo methods."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Goabaone Sehurutshe" }]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10"]
+keywords = ["actuarial", "reinsurance", "monte carlo", "insurance", "risk"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6"]
+examples = ["jupyter", "matplotlib", "pandas", "seaborn"]
+
+[project.urls]
+Homepage = "https://github.com/GSehurut/specinsure"
+Issues = "https://github.com/GSehurut/specinsure/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/specinsure"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "NPY"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
